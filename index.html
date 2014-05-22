@@ -1,71 +1,413 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Phi Leaf Generator by endeavor85</title>
+	<head>
+    <title>Travis Steel | Phi Leaf Generator</title>
+    <style>
+      body {
+        background-color: #ddd;
+        font-family: Verdana;
+        font-size: 11pt;
+        text-shadow: 1px 1px 2px rgba(255, 255, 255,.6);
+      }
+      #page-container {
+        width: 1200px;
+        height: 800px;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+      }
+      #footer {
+        text-align: center;
+        width: 1200px;
+        padding-top: 10px;
+      }
+      #leaf-canvas {
+        float: left;
+        width: 66.7%;
+        height: 800px;
+        border: 1px solid #000;
+      }
+      #options-container {
+        height: 780px;
+        margin-left: 66.7%;
+        border: 1px solid #000;
+        padding: 10px;
+      }
+      label {
+        display:inline-block;
+        width: 150px;
+      }
+      input {
+        display:inline-block;
+        border: 1px solid #888;
+        padding: 4px;
+        border-radius: 4px;
+        width: 100px;
+      }
+      input[type=button] {
+        cursor: pointer;
+      }
+      input[type=button]:hover {
+        background-color: #fff;
+      }
+      .canvas-color-picker {
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/ps-color-picker/jquery.ps-color-picker.min.js"></script>
+		<script>
+      var canvas;
+      var context;
+        
+      var phi = 1.618033988749894848204586834;
+      var angle = 360/phi;
+      var leaves = 50;
+      var leaf_length = 200;
+      var leaf_width = 70;
+      var leaf_bulb_ratio = 6;
+      var outline_width = 3;
+      var crease_length_percent = .6;
+      var crease_curvature_amount = 12;
+      var crease_line_width = 2;
+      var center_radius = 0;
+      var growth_radius = 4;
+      var shadow_blur = 20;
+      var shadow_offset_x = 6;
+      var shadow_offset_y = 6;
+      var shadow_opacity = .6;
+      var outline_color = "#115500";
+      var inner_leaf_grad = "#55ff66";
+      var outer_leaf_grad = "#22bb00";
+      var shadow_color = {r: 0, g: 0, b: 0};
+      
+			$(function() {
+        canvas = document.getElementById('leaf-canvas');
+        context = canvas.getContext('2d');
+        
+        // set option defaults
+        $('#leaves').val(leaves);
+        $('#angle').val(angle);
+        $('#leaf_length').val(leaf_length);
+        $('#leaf_width').val(leaf_width);
+        $('#leaf_bulb_ratio').val(leaf_bulb_ratio);
+        $('#outline_width').val(outline_width);
+        $('#crease_length_percent').val(crease_length_percent);
+        $('#crease_curvature_amount').val(crease_curvature_amount);
+        $('#crease_line_width').val(crease_line_width);
+        $('#center_radius').val(center_radius);
+        $('#growth_radius').val(growth_radius);
+        $('#shadow_blur').val(shadow_blur);
+        $('#shadow_offset_x').val(shadow_offset_x);
+        $('#shadow_offset_y').val(shadow_offset_y);
+        $('#shadow_opacity').val(shadow_opacity);
+        $('#outline_color').val(outline_color);
+        $('#inner_leaf_grad').val(inner_leaf_grad);
+        $('#outer_leaf_grad').val(outer_leaf_grad);
+        $('#shadow_color').val("#" + rgbToHex(shadow_color));
+        
+        $(document).on('click', '#save', function() {
+          window.location = canvas.toDataURL("image/png");
+        });
+        
+        $(document).on('change', '#leaves', function() {
+          leaves = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#angle', function() {
+          $(this).val($(this).val() % 360);
+          angle = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('click', '#phi', function() {
+          $('#angle').val(360/phi).trigger('change');
+        });
+        
+        $(document).on('change', '#leaf_length', function() {
+          $(this).val($(this).val());
+          leaf_length = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#leaf_width', function() {
+          $(this).val($(this).val());
+          leaf_width = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#leaf_bulb_ratio', function() {
+          $(this).val($(this).val());
+          leaf_bulb_ratio = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#outline_width', function() {
+          $(this).val($(this).val());
+          outline_width = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#crease_length_percent', function() {
+          $(this).val($(this).val());
+          crease_length_percent = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#crease_curvature_amount', function() {
+          $(this).val($(this).val());
+          crease_curvature_amount = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#crease_line_width', function() {
+          $(this).val($(this).val());
+          crease_line_width = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#center_radius', function() {
+          $(this).val($(this).val());
+          center_radius = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#growth_radius', function() {
+          $(this).val($(this).val());
+          growth_radius = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#shadow_blur', function() {
+          $(this).val($(this).val());
+          shadow_blur = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#shadow_offset_x', function() {
+          $(this).val($(this).val());
+          shadow_offset_x = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#shadow_offset_y', function() {
+          $(this).val($(this).val());
+          shadow_offset_y = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#shadow_opacity', function() {
+          $(this).val($(this).val());
+          shadow_opacity = $(this).val();
+          drawLeaves();
+        });
+        
+        $(document).on('change', '#colorpicker', function() {
+          $(this).val($(this).val());
+          colorpicker = $(this).val();
+          drawLeaves();
+        });
+        
+        $('#outline_color').CanvasColorPicker({
+          onColorChange: function(RGB,HSB){
+            outline_color = rgbToHex(RGB);
+            drawLeaves();
+          }
+        });
+        
+        $('#inner_leaf_grad').CanvasColorPicker({
+          onColorChange: function(RGB,HSB){
+            inner_leaf_grad = rgbToHex(RGB);
+            drawLeaves();
+          }
+        });
+        
+        $('#outer_leaf_grad').CanvasColorPicker({
+          onColorChange: function(RGB,HSB){
+            outer_leaf_grad = rgbToHex(RGB);
+            drawLeaves();
+          }
+        });
+        
+        $('#shadow_color').CanvasColorPicker({
+          onColorChange: function(RGB,HSB){
+            shadow_color = RGB;
+            drawLeaves();
+          }
+        });
+        
+        drawLeaves();
+      });
+      
+      drawLeaves = function() {
+				if(context) {
+					context.save();
+					context.clearRect(0,0, canvas.width, canvas.height);
+					
+					context.translate(canvas.width * 0.5, canvas.height * 0.5);
+					
+					for(var i = leaves; i > 0; i--) {
+            // leave the '+' before center_radius, otherwise js will interpret as string
+						var awaying = +center_radius+(i*growth_radius);
+						
+						context.save();
+						context.lineJoin = 'round';
+						
+						context.rotate(degToRad((i * angle) % 360));
+						
+						context.save();
+						
+						// leaf outline
+						context.beginPath();
+						context.moveTo(0,-awaying);
+						context.quadraticCurveTo(-leaf_width, -awaying-leaf_length/leaf_bulb_ratio, 0, -awaying-leaf_length);
+						context.quadraticCurveTo(leaf_width, -awaying-leaf_length/leaf_bulb_ratio, 0, -awaying);
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>Phi Leaf Generator</h1>
-        <p>exploring the beauty of Phi</p>
+						// leaf radial gradient
+						var grd = context.createRadialGradient(0, -awaying, 0, 0, -awaying, (leaf_length) >= 0 ? ( leaf_length) : 0);
+						grd.addColorStop(0, inner_leaf_grad);
+						grd.addColorStop(1, outer_leaf_grad);
+						context.shadowColor = "rgba(" + shadow_color.r + ", " + shadow_color.g + ", " + shadow_color.b + ", " + shadow_opacity + ")";
+						context.shadowBlur = shadow_blur;
+						context.shadowOffsetX = shadow_offset_x;
+						context.shadowOffsetY = shadow_offset_y;
+						context.fillStyle = grd;
+						context.fill();
+						
+						context.restore();
+						
+						context.closePath();
+            if(outline_width > 0)
+            {
+              context.lineWidth = outline_width;
+              context.strokeStyle = outline_color;
+              context.stroke();
+            }
+						
+            if(crease_line_width > 0)
+            {
+              context.lineWidth = crease_line_width;
+              context.beginPath();
+              context.moveTo(0,-awaying);
+              context.quadraticCurveTo(crease_curvature_amount, -awaying-leaf_length/leaf_bulb_ratio, 0, -awaying-leaf_length*crease_length_percent);
+              context.stroke();
+            }
+						
+						context.restore();
+					}
+				}
+				context.restore();
+			};
+			
+			function degToRad(deg) {
+				return deg * 0.0174532925199432957;
+			}
+      
+      function rgbToHex(rgb) {
+        return byteToHex(rgb.r) + byteToHex(rgb.g) + byteToHex(rgb.b);
+      }
+      
+      function byteToHex(b)
+      {
+        var hexString = "0123456789ABCDEF";
+        return String(hexString.substr((b >> 4) & 0x0F,1)) + hexString.substr(b & 0x0F,1);
+      }
+		</script>
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-34554733-1']);
+      _gaq.push(['_trackPageview']);
 
-        <p class="view"><a href="https://github.com/endeavor85/phi">View the Project on GitHub <small>endeavor85/phi</small></a></p>
-
-
-        <ul>
-          <li><a href="https://github.com/endeavor85/phi/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/endeavor85/phi/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/endeavor85/phi">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
-
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
-
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
-
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/endeavor85">endeavor85</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+	</head>
+	<body>
+    <div id='page-container'>
+      <canvas id='leaf-canvas' width='800' height='800'>
+        Canvas not supported.
+      </canvas>
+      <div id='options-container'>
+        <fieldset>
+          <legend>Arrangement</legend>
+          <label for='leaves'>Number of leaves:</label>
+          <input id='leaves' name='leaves' type="number" step="1" min='1'>
+          <br/>
+          <label for='angle'>Angle:</label>
+          <input id='angle' name='angle' type="number"/>
+          <input id='phi' type="button" style='width: 60px;' value='&phi; - phi'/>
+          <br/>
+          <label for='center_radius'>Center radius:</label>
+          <input id='center_radius' name='center_radius' type="number"/>
+          <br/>
+          <label for='growth_radius'>Growth radius:</label>
+          <input id='growth_radius' name='growth_radius' type="number"/>
+        </fieldset>
+        <fieldset>
+          <legend>Leaf Shape</legend>
+          <label for='leaf_length'>Leaf length:</label>
+          <input id='leaf_length' name='leaf_length' type="number" step="1" min='1'/>
+          <br/>
+          <label for='leaf_width'>Leaf width:</label>
+          <input id='leaf_width' name='leaf_width' type="number" step="1" min='1'/>
+          <br/>
+          <label for='leaf_bulb_ratio'>Leaf bulb ratio:</label>
+          <input id='leaf_bulb_ratio' name='leaf_bulb_ratio' type="number" step="1" min='1'/>
+        </fieldset>
+        <fieldset>
+          <legend>Lines</legend>
+          <label for='outline_width'>Outline width:</label>
+          <input id='outline_width' name='outline_width' type="number" min='0'/>
+          <br/>
+          <label for='crease_line_width'>Crease line width:</label>
+          <input id='crease_line_width' name='crease_line_width' type="number" min='0'/>
+          <br/>
+          <label for='crease_length_percent'>Crease length (%):</label>
+          <input id='crease_length_percent' name='crease_length_percent' type="number" min='0' max='1' step='0.1'/>
+          <br/>
+          <label for='crease_curvature_amount'>Crease curvature:</label>
+          <input id='crease_curvature_amount' name='crease_curvature_amount' type="number"/>
+        </fieldset>
+        <fieldset>
+          <legend>Colors</legend>
+          <label for='outline_color'>Outline color:</label>
+          <input id='outline_color' name='outline_color' type='text' class='colorpicker' maxlength='7' />
+          <br/>
+          <label for='outer_leaf_grad'>Outer leaf gradient:</label>
+          <input id='outer_leaf_grad' name='outer_leaf_grad' type='text' class='colorpicker' maxlength='7' />
+          <br/>
+          <label for='inner_leaf_grad'>Inner leaf gradient:</label>
+          <input id='inner_leaf_grad' name='inner_leaf_grad' type='text' class='colorpicker' maxlength='7' />
+          <br/>
+          <label for='shadow_color'>Shadow color:</label>
+          <input id='shadow_color' name='shadow_color' type='text' class='colorpicker' maxlength='7' />
+        </fieldset>
+        <fieldset>
+          <legend>Shadows</legend>
+          <label for='shadow_blur'>Shadow blur:</label>
+          <input id='shadow_blur' name='shadow_blur' type="number" min='0'/>
+          <br/>
+          <label for='shadow_offset_x'>Shadow offset X:</label>
+          <input id='shadow_offset_x' name='shadow_offset_x' type="number"/>
+          <br/>
+          <label for='shadow_offset_y'>Shadow offset Y:</label>
+          <input id='shadow_offset_y' name='shadow_offset_y' type="number"/>
+          <br/>
+          <label for='shadow_opacity'>Shadow opacity:</label>
+          <input id='shadow_opacity' name='shadow_opacity' type="number" min='0' max='1' step='0.1'/>
+        </fieldset>
+        <input id='save' type=button value='Save image' style='margin-left: 140px;' />
+      </div>
+      <div id='footer'>
+        Inspired by <a href='http://vihart.com/'>Vi Hart</a>'s <a href='http://www.youtube.com/watch?v=ahXIMUkSXX0&feature=share&list=ECF7CBA45AEBAD18B8'> doodling videos</a>.<br/>
+        &copy; 2012 Travis Steel
+      </div>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
-    
-  </body>
+	</body>
 </html>
